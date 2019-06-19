@@ -1,0 +1,33 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  ACCESS_TOKEN:
+
+build:
+  stage: build
+  script:
+    - npm install
+
+test:
+  stage: test
+  script:
+    - ./bin/run --version
+    - ./bin/run --help
+    - npm test
+    - ./node_modules/.bin/nyc report --reporter text-lcov > coverage.lcov
+
+deploy:
+  stage: deploy
+  script:
+    - docker login rg.teamc.io
+    - docker build -t rg.teamc.io/sergey.shoomakov/teamclio .
+    - docker push rg.teamc.io/sergey.shoomakov/teamclio
+
+trigger_build:
+  stage: deploy
+  script:
+    - "curl -X POST -F token=$TOKEN -F ref=REF_NAME https://gitlab.teamc.io/api/v4/projects/560/trigger/pipeline"
+
